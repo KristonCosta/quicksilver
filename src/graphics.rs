@@ -184,16 +184,14 @@ impl Graphics {
         for vertex in vertices {
             let uv = vertex.uv.unwrap_or(Vector { x: -1.0, y: -1.0 });
             let pos = self.transform * vertex.pos;
-            self.vertex_data.extend_from_slice(&[
-                vertex.color.r,
-                vertex.color.g,
-                vertex.color.b,
-                vertex.color.a,
-                pos.x,
-                pos.y,
-                uv.x,
-                uv.y,
-            ]);
+            self.vertex_data.push(vertex.color.r);
+            self.vertex_data.push(vertex.color.g);
+            self.vertex_data.push(vertex.color.b);
+            self.vertex_data.push(vertex.color.a);
+            self.vertex_data.push(pos.x);
+            self.vertex_data.push(pos.y);
+            self.vertex_data.push(uv.x);
+            self.vertex_data.push(uv.y);
         }
 
         // It's important to keep this above the next block:
@@ -219,11 +217,9 @@ impl Graphics {
                     GeometryMode::Lines
                 }
                 Element::Triangle([a, b, c]) => {
-                    self.index_data.extend_from_slice(&[
-                        a + tri_offset,
-                        b + tri_offset,
-                        c + tri_offset,
-                    ]);
+                    self.index_data.push(a + tri_offset);
+                    self.index_data.push(b + tri_offset);
+                    self.index_data.push(c + tri_offset);
                     GeometryMode::Triangles
                 }
             };
@@ -495,8 +491,10 @@ impl Graphics {
             }
         }
         golem::Surface::unbind(&self.ctx);
-        self.vertex_data.clear();
-        self.index_data.clear();
+        unsafe {
+            self.vertex_data.set_len(0);
+            self.index_data.set_len(0);
+        }
 
         Ok(())
     }
